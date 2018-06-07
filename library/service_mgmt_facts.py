@@ -14,13 +14,13 @@ ANSIBLE_METADATA = {
 
 
 def get_docker_containers(module, container_list):
+    from requests.exceptions import ConnectionError
     if len(container_list) == 0:
         pass
     client = docker.from_env()
     try:
         containers = client.containers.list()
-        docker_list = [{'container_image': i.attrs['Config']['Image'],
-                        'container_name': i.attrs['Name'].strip('/')} for i
+        docker_list = [{'container_name': i.attrs['Name'].strip('/')} for i
                        in containers if i.attrs['Name'].strip('/') in
                        container_list]
 
@@ -28,7 +28,10 @@ def get_docker_containers(module, container_list):
     except docker.errors.APIError as e:
         module.fail_json(
             msg='Error listing containers: {}'.format(to_native(e)))
-    # TODO: handle permission errors from client
+    except ConnectionError as e:
+        module.fail_json(
+            msg='Error connecting to Docker: {}'.format(to_native(e))
+        )
 
 
 def get_systemd_services(module, service_unit_list):
@@ -54,18 +57,24 @@ def get_systemd_services(module, service_unit_list):
 
 def run_module():
 
-    module_args = dict(service_name=dict(type=dict, required=False))
-    # ok so that's a dict that looks like
-    # cinder['service'] == ['openstack-cinder-api', 'openstack-cinder-volume']
-    # cinder['container_list'] == ['cinder_api', 'cinder_api_cron']
+    module_args = dict(operations_service_map=dict(type=dict, required=True),
+                       operations_service_names=dict(type=list, required=True),
+                       )
 
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
     )
 
-    service_unit_list = module.params.get('service_name')['systemd_unit']
-    container_list = module.params.get('service_name')['container_name']
+    service_map = module.params.get('operations_service_map')
+    service_names = module.params.get('operations_service_names')
+
+    services_to_restart = {i: service_map[i] for i in service_names}
+
+    container_list = [j for i in service_names
+                      for j in services_to_restart[i]['container_name']]
+    service_unit_list = [j for i in service_names
+                         for j in services_to_restart[i]['systemd_unit']]
 
     result = dict(
         ansible_facts=dict(

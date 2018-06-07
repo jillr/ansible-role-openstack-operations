@@ -8,6 +8,9 @@
         name: openstack-ops
         tasks_from: restart_service.yml
       vars:
-        operations_service_map: "{{ lookup('file','library/tripleo-mapping.yaml') | from_yaml }}"
-        operations_service_names: 'cinder'
+        operations_service_names:
+          - 'cinder'
+          - 'swift'
+        custom_service_map: "{{ lookup('file', 'user_defined_mapping.yaml') | from_yaml }}"
+
 

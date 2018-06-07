@@ -1,11 +1,11 @@
 - name: Gather container list
   service_mgmt_facts:
-    service_name: "{{ operations_service_map[operations_service_names] }}"
+    operations_service_names: "{{ operations_service_names }}"
+    operations_service_map:  "{{ operations_service_map }}"
 
 - name: Restart containerized OpenStack services
   docker_container:
     name: "{{ item['container_name'] }}"
-    image: "{{ item['container_image'] }}"
     state: started
     restart: yes
   loop: "{{ docker_containers }}"
