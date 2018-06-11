@@ -1,7 +1,7 @@
 - name: Gather container list
   service_mgmt_facts:
     operations_service_names: "{{ operations_service_names }}"
-    operations_service_map:  "{{ operations_service_map }}"
+    operations_service_map:  "{{ operations_default_service_map|combine(operations_custom_service_map) }}"
 
 - name: Restart containerized OpenStack services
   docker_container:
@@ -16,4 +16,3 @@
     state: restarted
   loop: "{{ systemd_services }}"
   when: item['state'] == "enabled"
-

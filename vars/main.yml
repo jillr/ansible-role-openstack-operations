@@ -1,1 +1,2 @@
-default_service_map: "{{ lookup('file','files/tripleo-service-mapping.yaml') | from_yaml }}"
+include: tripleo-service-mapping.yaml
+operations_custom_service_map: {}

@@ -24,5 +24,3 @@ operations_logs:
 
 # Restart Service
 operations_service_names: []
-custom_service_map: {}
-operations_service_map: "{{ default_service_map|combine(custom_service_map) }}"
